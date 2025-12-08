@@ -67,6 +67,15 @@ class Interpreter(executionEngine: ExecutionEngine):
             val const = frame.nextByte()
             IincInstruction(index, const).execute(frame)
 
+          // Array creation
+          case NEWARRAY =>
+            val arrayType = frame.nextByte() & 0xff
+            NewArrayInstruction(arrayType).execute(frame)
+
+          case ANEWARRAY =>
+            val classIndex = frame.nextShort() & 0xffff
+            ANewArrayInstruction(classIndex).execute(frame)
+
           // Method invocation
           case INVOKESTATIC =>
             val methodRefIndex = frame.nextShort() & 0xffff

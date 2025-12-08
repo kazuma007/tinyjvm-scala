@@ -4,16 +4,29 @@ An (educational) implementation of a Java Virtual Machine in Scala 3, demonstrat
 
 ## Features
 
-- **Class Loading**: Parse and load Java `.class` files
-- **Bytecode Interpretation**: Execute JVM bytecode instructions
-- **Runtime Data Areas**: Method area, heap, stacks, frames
-- **Supported Instructions**: 50+ bytecode instructions including:
-  - Arithmetic operations (IADD, ISUB, IMUL, IDIV, etc.)
-  - Control flow (GOTO, IF*, branches)
-  - Stack operations (DUP, POP, SWAP)
-  - Method invocation (INVOKESTATIC)
-  - Load/store operations
-  - Constants
+- **Class Loading**: Parse and load Java `.class` files.[1]
+- **Bytecode Interpretation**: Execute JVM bytecode instructions.[1]
+- **Runtime Data Areas**: Method area, heap, stacks, frames.[1]
+- **Supported Instructions**: 50+ bytecode instructions including:[1]
+    - Arithmetic operations (IADD, ISUB, IMUL, IDIV, etc.).
+    - Control flow (GOTO, IF*, branches).
+    - Stack operations (DUP, POP, SWAP).
+    - Method invocation (INVOKESTATIC).
+    - Load/store operations.
+    - Constants.
+- **Array Support**: Primitive and reference arrays with JVM-like safety checks.[1]
+    - Creation:
+        - `NEWARRAY` for primitive arrays (int, long, float, double, byte, char, short, boolean).
+        - `ANEWARRAY` for reference arrays (e.g., `Object[]`).
+    - Access:
+        - Loads: `IALOAD`, `LALOAD`, `FALOAD`, `DALOAD`, `AALOAD`, `BALOAD`, `CALOAD`, `SALOAD`.
+        - Stores: `IASTORE`, `LASTORE`, `FASTORE`, `DASTORE`, `AASTORE`, `BASTORE`, `CASTORE`, `SASTORE`.
+    - Length:
+        - `ARRAYLENGTH` to read array length.
+    - Safety:
+        - `NullPointerException` on null arrays.
+        - `ArrayIndexOutOfBoundsException` on invalid indices.
+        - `NegativeArraySizeException` on negative sizes.
 
 ## Project Structure
 
@@ -142,7 +155,6 @@ sbt scalafixAll
 
 This is an educational implementation with several limitations:
 - No object creation or instance methods (only static methods)
-- No arrays
 - No exception handling
 - No garbage collection
 - Limited standard library support

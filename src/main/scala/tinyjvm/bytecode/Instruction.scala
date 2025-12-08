@@ -90,6 +90,208 @@ case class NoOperandInstruction(opcode: Int) extends Instruction:
         if v2 == 0L then throw new ArithmeticException("Division by zero")
         frame.operandStack.push(v1 / v2)
 
+      // Array load operations
+      case IALOAD =>
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Int]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        frame.operandStack.push(array(index))
+
+      case LALOAD =>
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Long]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        frame.operandStack.push(array(index))
+
+      case FALOAD =>
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Float]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        frame.operandStack.push(array(index))
+
+      case DALOAD =>
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Double]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        frame.operandStack.push(array(index))
+
+      case AALOAD =>
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[AnyRef]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        frame.operandStack.push(array(index))
+
+      case BALOAD =>
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Byte]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        frame.operandStack.push(array(index).toInt)
+
+      case CALOAD =>
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Char]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        frame.operandStack.push(array(index).toInt)
+
+      case SALOAD =>
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Short]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        frame.operandStack.push(array(index).toInt)
+
+      // Array store operations
+      case IASTORE =>
+        val value = frame.operandStack.pop().asInstanceOf[Int]
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Int]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        array(index) = value
+
+      case LASTORE =>
+        val value = frame.operandStack.pop().asInstanceOf[Long]
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Long]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        array(index) = value
+
+      case FASTORE =>
+        val value = frame.operandStack.pop().asInstanceOf[Float]
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Float]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        array(index) = value
+
+      case DASTORE =>
+        val value = frame.operandStack.pop().asInstanceOf[Double]
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Double]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        array(index) = value
+
+      case AASTORE =>
+        val value = frame.operandStack.pop()
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[AnyRef]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        array(index) = value.asInstanceOf[AnyRef]
+
+      case BASTORE =>
+        val value = frame.operandStack.pop().asInstanceOf[Int]
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Byte]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        array(index) = value.toByte
+
+      case CASTORE =>
+        val value = frame.operandStack.pop().asInstanceOf[Int]
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Char]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        array(index) = value.toChar
+
+      case SASTORE =>
+        val value = frame.operandStack.pop().asInstanceOf[Int]
+        val index = frame.operandStack.pop().asInstanceOf[Int]
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val array = arrayRef.asInstanceOf[Array[Short]]
+        if index < 0 || index >= array.length then
+          throw new ArrayIndexOutOfBoundsException(
+            s"Index $index out of bounds for length ${array.length}"
+          )
+        array(index) = value.toShort
+
+      // Array length
+      case ARRAYLENGTH =>
+        val arrayRef = frame.operandStack.pop()
+        if arrayRef == null then throw new NullPointerException("Array is null")
+        val length = arrayRef match
+          case arr: Array[Int]    => arr.length
+          case arr: Array[Long]   => arr.length
+          case arr: Array[Float]  => arr.length
+          case arr: Array[Double] => arr.length
+          case arr: Array[Byte]   => arr.length
+          case arr: Array[Char]   => arr.length
+          case arr: Array[Short]  => arr.length
+          case arr: Array[AnyRef] => arr.length
+          case _ => throw new InternalError(s"Unknown array type: ${arrayRef.getClass}")
+        frame.operandStack.push(length)
+
       // Load operations with implicit indices
       case ILOAD_0 => frame.operandStack.push(frame.localVariables.get(0))
       case ILOAD_1 => frame.operandStack.push(frame.localVariables.get(1))
@@ -161,6 +363,57 @@ case class NoOperandInstruction(opcode: Int) extends Instruction:
 
 end NoOperandInstruction
 
+/** Array type constants for NEWARRAY instruction
+  */
+object ArrayType:
+  val T_BOOLEAN: Int = 4
+  val T_CHAR: Int = 5
+  val T_FLOAT: Int = 6
+  val T_DOUBLE: Int = 7
+  val T_BYTE: Int = 8
+  val T_SHORT: Int = 9
+  val T_INT: Int = 10
+  val T_LONG: Int = 11
+
+/** NEWARRAY instruction - create primitive array
+  */
+case class NewArrayInstruction(arrayType: Int) extends Instruction:
+  override val opcode: Int = NEWARRAY
+
+  override def execute(frame: Frame): Unit =
+    val count = frame.operandStack.pop().asInstanceOf[Int]
+    if count < 0 then throw new NegativeArraySizeException(s"Array size cannot be negative: $count")
+
+    val array = arrayType match
+      case ArrayType.T_BOOLEAN => new Array[Byte](count) // boolean[] stored as byte[]
+      case ArrayType.T_CHAR    => new Array[Char](count)
+      case ArrayType.T_FLOAT   => new Array[Float](count)
+      case ArrayType.T_DOUBLE  => new Array[Double](count)
+      case ArrayType.T_BYTE    => new Array[Byte](count)
+      case ArrayType.T_SHORT   => new Array[Short](count)
+      case ArrayType.T_INT     => new Array[Int](count)
+      case ArrayType.T_LONG    => new Array[Long](count)
+      case _                   => throw new InternalError(s"Invalid array type: $arrayType")
+
+    frame.operandStack.push(array)
+
+end NewArrayInstruction
+
+/** ANEWARRAY instruction - create reference array
+  */
+case class ANewArrayInstruction(classIndex: Int) extends Instruction:
+  override val opcode: Int = ANEWARRAY
+
+  override def execute(frame: Frame): Unit =
+    val count = frame.operandStack.pop().asInstanceOf[Int]
+    if count < 0 then throw new NegativeArraySizeException(s"Array size cannot be negative: $count")
+
+    // Create object array (simplified - not checking actual class type)
+    val array = new Array[AnyRef](count)
+    frame.operandStack.push(array)
+
+end ANewArrayInstruction
+
 /** Instructions with an index operand (e.g., ILOAD, ISTORE)
   */
 case class IndexInstruction(opcode: Int, index: Int) extends Instruction:
@@ -186,9 +439,7 @@ case class ByteInstruction(opcode: Int, operand: Byte) extends Instruction:
     opcode match
       case BIPUSH => frame.operandStack.push(operand.toInt)
       case _ =>
-        throw new UnsupportedOperationException(
-          s"Unsupported byte opcode: 0x${opcode.toHexString}"
-        )
+        throw new UnsupportedOperationException(s"Unsupported byte opcode: 0x${opcode.toHexString}")
 
 end ByteInstruction
 
