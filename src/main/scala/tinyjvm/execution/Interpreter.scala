@@ -5,6 +5,33 @@ import tinyjvm.bytecode._
 import tinyjvm.classloader.MethodRefEntry
 import tinyjvm.runtime.Frame
 
+/** JVM Field Type Descriptors
+  * https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html#jvms-4.3
+  */
+object FieldDescriptor:
+  val BYTE: Char = 'B' // byte
+  val CHAR: Char = 'C' // char
+  val DOUBLE: Char = 'D' // double
+  val FLOAT: Char = 'F' // float
+  val INT: Char = 'I' // int
+  val LONG: Char = 'J' // long
+  val REFERENCE: Char = 'L' // object reference
+  val SHORT: Char = 'S' // short
+  val BOOLEAN: Char = 'Z' // boolean
+  val ARRAY: Char = '[' // array
+
+  /** Check if a descriptor represents a primitive type (single word)
+    */
+  def isSingleWord(desc: Char): Boolean = desc match
+    case BYTE | CHAR | FLOAT | INT | SHORT | BOOLEAN => true
+    case _                                           => false
+
+  /** Check if a descriptor represents a double-word type
+    */
+  def isDoubleWord(desc: Char): Boolean = desc match
+    case DOUBLE | LONG => true
+    case _             => false
+
 /** The interpreter executes bytecode instructions
   */
 class Interpreter(executionEngine: ExecutionEngine):
@@ -131,6 +158,9 @@ class Interpreter(executionEngine: ExecutionEngine):
         throw new RuntimeException(s"Cannot load constant of type ${other.getClass.getSimpleName}")
 
   /** Count the number of arguments in a method descriptor
+    *
+    * Method descriptor format: (ParameterDescriptor*)ReturnDescriptor Example:
+    * (ILjava/lang/String;)V means int, String -> void
     */
   private def countArguments(descriptor: String): Int =
     val params = descriptor.substring(1, descriptor.indexOf(')'))
@@ -139,21 +169,33 @@ class Interpreter(executionEngine: ExecutionEngine):
 
     while i < params.length do
       params.charAt(i) match
-        case 'B' | 'C' | 'F' | 'I' | 'S' | 'Z' =>
+        // Single-word primitive types
+        case FieldDescriptor.BYTE | FieldDescriptor.CHAR | FieldDescriptor.FLOAT |
+            FieldDescriptor.INT | FieldDescriptor.SHORT | FieldDescriptor.BOOLEAN =>
           count += 1
           i += 1
-        case 'D' | 'J' =>
+
+        // Double-word primitive types
+        case FieldDescriptor.DOUBLE | FieldDescriptor.LONG =>
           count += 1
           i += 1
-        case 'L' =>
+
+        // Object reference (e.g., Ljava/lang/String;)
+        case FieldDescriptor.REFERENCE =>
           count += 1
           i = params.indexOf(';', i) + 1
-        case '[' =>
+
+        // Array (e.g., [I, [[Ljava/lang/Object;)
+        case FieldDescriptor.ARRAY =>
           count += 1
           i += 1
-          while i < params.length && params.charAt(i) == '[' do i += 1
-          if i < params.length && params.charAt(i) == 'L' then i = params.indexOf(';', i) + 1
+          // Skip additional array dimensions
+          while i < params.length && params.charAt(i) == FieldDescriptor.ARRAY do i += 1
+          // Skip element type
+          if i < params.length && params.charAt(i) == FieldDescriptor.REFERENCE then
+            i = params.indexOf(';', i) + 1
           else i += 1
+
         case _ =>
           i += 1
 

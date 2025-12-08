@@ -7,6 +7,30 @@ import java.io.DataInputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 
+/** JVM Class File Magic Number
+  */
+object ClassFileMagic:
+  val CAFEBABE: Int = 0xcafebabe
+
+/** Constant Pool Tag Constants (JVM Spec Table 4.4-A)
+  * https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html#jvms-4.4
+  */
+object ConstantPoolTag:
+  val UTF8: Int = 1
+  val INTEGER: Int = 3
+  val FLOAT: Int = 4
+  val LONG: Int = 5
+  val DOUBLE: Int = 6
+  val CLASS: Int = 7
+  val STRING: Int = 8
+  val FIELDREF: Int = 9
+  val METHODREF: Int = 10
+  val INTERFACE_METHODREF: Int = 11
+  val NAME_AND_TYPE: Int = 12
+  val METHOD_HANDLE: Int = 15
+  val METHOD_TYPE: Int = 16
+  val INVOKE_DYNAMIC: Int = 18
+
 /** Represents a parsed class file
   */
 case class ClassFile(
@@ -54,9 +78,9 @@ class ClassFileParser:
     try
       // Magic number (0xCAFEBABE)
       val magic = dis.readInt()
-      if magic != 0xcafebabe then
+      if magic != ClassFileMagic.CAFEBABE then
         throw new ClassFormatError(
-          s"Invalid magic number: 0x${magic.toHexString}, expected 0xCAFEBABE"
+          s"Invalid magic number: 0x${magic.toHexString}, expected 0x${ClassFileMagic.CAFEBABE.toHexString}"
         )
 
       // Version
@@ -116,55 +140,55 @@ class ClassFileParser:
     while i < count do
       val tag = dis.readUnsignedByte()
       pool(i) = tag match
-        case 1 => // UTF8
+        case ConstantPoolTag.UTF8 =>
           val length = dis.readUnsignedShort()
           val bytes = new Array[Byte](length)
           dis.readFully(bytes)
           Utf8Entry(new String(bytes, "UTF-8"))
 
-        case 3 => // Integer
+        case ConstantPoolTag.INTEGER =>
           IntegerEntry(dis.readInt())
 
-        case 4 => // Float
+        case ConstantPoolTag.FLOAT =>
           FloatEntry(dis.readFloat())
 
-        case 5 => // Long (takes 2 slots)
+        case ConstantPoolTag.LONG => // Long takes 2 slots
           val entry = LongEntry(dis.readLong())
           i += 1
           if i < count then pool(i) = EmptyEntry
           entry
 
-        case 6 => // Double (takes 2 slots)
+        case ConstantPoolTag.DOUBLE => // Double takes 2 slots
           val entry = DoubleEntry(dis.readDouble())
           i += 1
           if i < count then pool(i) = EmptyEntry
           entry
 
-        case 7 => // Class
+        case ConstantPoolTag.CLASS =>
           ClassEntry(dis.readUnsignedShort())
 
-        case 8 => // String
+        case ConstantPoolTag.STRING =>
           StringEntry(dis.readUnsignedShort())
 
-        case 9 => // Fieldref
+        case ConstantPoolTag.FIELDREF =>
           FieldRefEntry(dis.readUnsignedShort(), dis.readUnsignedShort())
 
-        case 10 => // Methodref
+        case ConstantPoolTag.METHODREF =>
           MethodRefEntry(dis.readUnsignedShort(), dis.readUnsignedShort())
 
-        case 11 => // InterfaceMethodref
+        case ConstantPoolTag.INTERFACE_METHODREF =>
           InterfaceMethodRefEntry(dis.readUnsignedShort(), dis.readUnsignedShort())
 
-        case 12 => // NameAndType
+        case ConstantPoolTag.NAME_AND_TYPE =>
           NameAndTypeEntry(dis.readUnsignedShort(), dis.readUnsignedShort())
 
-        case 15 => // MethodHandle
+        case ConstantPoolTag.METHOD_HANDLE =>
           MethodHandleEntry(dis.readUnsignedByte(), dis.readUnsignedShort())
 
-        case 16 => // MethodType
+        case ConstantPoolTag.METHOD_TYPE =>
           MethodTypeEntry(dis.readUnsignedShort())
 
-        case 18 => // InvokeDynamic
+        case ConstantPoolTag.INVOKE_DYNAMIC =>
           InvokeDynamicEntry(dis.readUnsignedShort(), dis.readUnsignedShort())
 
         case _ =>
