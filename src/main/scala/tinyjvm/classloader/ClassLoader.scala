@@ -1,17 +1,17 @@
 package tinyjvm.classloader
 
-import tinyjvm.runtime.{MethodArea, ClassInfo, MethodInfo, FieldInfo}
+import tinyjvm.runtime.ClassInfo
+import tinyjvm.runtime.MethodArea
+
 import java.nio.file.Paths
 
-/**
- * ClassLoader loads and parses Java class files
- */
+/** ClassLoader loads and parses Java class files
+  */
 class ClassLoader(methodArea: MethodArea):
   private val parser = new ClassFileParser()
 
-  /**
-   * Load a class from a file path
-   */
+  /** Load a class from a file path
+    */
   def loadClass(classPath: String): ClassInfo =
     println(s"[ClassLoader] Loading class from: $classPath")
 
@@ -31,14 +31,11 @@ class ClassLoader(methodArea: MethodArea):
     println(s"[ClassLoader] Successfully loaded class: $className")
     classInfo
 
-  /**
-   * Extract class name from file path
-   */
+  /** Extract class name from file path
+    */
   private def extractClassName(classPath: String): String =
     val fileName = Paths.get(classPath).getFileName.toString
-    if fileName.endsWith(".class") then
-      fileName.substring(0, fileName.length - 6)
-    else
-      fileName
+    if fileName.endsWith(".class") then fileName.substring(0, fileName.length - 6)
+    else fileName
 
 end ClassLoader

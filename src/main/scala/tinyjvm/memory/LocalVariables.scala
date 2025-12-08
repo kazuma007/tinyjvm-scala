@@ -1,14 +1,12 @@
 package tinyjvm.memory
 
-/**
- * Local variable array for storing method parameters and local variables
- */
+/** Local variable array for storing method parameters and local variables
+  */
 class LocalVariables(maxLocals: Int):
   private val variables = new Array[Any](maxLocals)
 
-  /**
-   * Set a local variable at the given index
-   */
+  /** Set a local variable at the given index
+    */
   def set(index: Int, value: Any): Unit =
     if index < 0 || index >= maxLocals then
       throw new IndexOutOfBoundsException(
@@ -16,9 +14,8 @@ class LocalVariables(maxLocals: Int):
       )
     variables(index) = value
 
-  /**
-   * Get a local variable at the given index
-   */
+  /** Get a local variable at the given index
+    */
   def get(index: Int): Any =
     if index < 0 || index >= maxLocals then
       throw new IndexOutOfBoundsException(
@@ -33,9 +30,8 @@ class LocalVariables(maxLocals: Int):
   def getDouble(index: Int): Double = get(index).asInstanceOf[Double]
   def getRef(index: Int): AnyRef = get(index).asInstanceOf[AnyRef]
 
-  /**
-   * Get the maximum number of local variables
-   */
+  /** Get the maximum number of local variables
+    */
   def size: Int = maxLocals
 
   override def toString: String =

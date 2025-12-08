@@ -1,22 +1,22 @@
 package tinyjvm.execution
 
-import tinyjvm.runtime.{Frame, Stack, MethodArea}
+import tinyjvm.runtime.Frame
+import tinyjvm.runtime.MethodArea
+import tinyjvm.runtime.Stack
 
-/**
- * The execution engine manages the execution of methods
- */
+/** The execution engine manages the execution of methods
+  */
 class ExecutionEngine(methodArea: MethodArea):
   private val threadStack = new Stack()
-  private val interpreter: Interpreter = new Interpreter(methodArea, this)
+  private val interpreter: Interpreter = new Interpreter(this)
 
-  /**
-   * Execute a method
-   */
+  /** Execute a method
+    */
   def execute(
-    className: String, 
-    methodName: String, 
-    descriptor: String, 
-    args: Array[Any] = Array()
+      className: String,
+      methodName: String,
+      descriptor: String,
+      args: Array[Any] = Array()
   ): Option[Any] =
     println(s"[ExecutionEngine] Executing $className.$methodName$descriptor")
 
@@ -40,8 +40,7 @@ class ExecutionEngine(methodArea: MethodArea):
     )
 
     // Initialize local variables with method arguments
-    for i <- args.indices do
-      frame.localVariables.set(i, args(i))
+    for i <- args.indices do frame.localVariables.set(i, args(i))
 
     // Push frame onto thread stack
     threadStack.push(frame)
@@ -61,20 +60,18 @@ class ExecutionEngine(methodArea: MethodArea):
         threadStack.clear()
         throw e
 
-  /**
-   * Execute a method (alias for execute, used by interpreter)
-   */
+  /** Execute a method (alias for execute, used by interpreter)
+    */
   def executeMethod(
-    className: String, 
-    methodName: String, 
-    descriptor: String, 
-    args: Array[Any]
+      className: String,
+      methodName: String,
+      descriptor: String,
+      args: Array[Any]
   ): Option[Any] =
     execute(className, methodName, descriptor, args)
 
-  /**
-   * Get the thread stack (for debugging)
-   */
+  /** Get the thread stack (for debugging)
+    */
   def getThreadStack: Stack = threadStack
 
 end ExecutionEngine

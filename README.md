@@ -120,6 +120,24 @@ Output:
 [success] Total time: 12 s, completed 6 Dec 2025, 16:43:01
 ```
 
+## Linting & Formatting
+
+This project uses **Scalafmt** and **Scalafix**.
+
+### Commands
+
+#### Format code with Scalafmt:
+
+```
+sbt scalafmtAll
+```
+
+#### Run Scalafix to clean up unused imports and locals:
+
+```
+sbt scalafixAll
+```
+
 ## Limitations
 
 This is an educational implementation with several limitations:

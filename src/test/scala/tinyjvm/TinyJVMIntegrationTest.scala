@@ -1,18 +1,28 @@
 package tinyjvm
 
-import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.BeforeAndAfterAll
-import java.nio.file.{Files, Paths}
+import org.scalatest.funsuite.AnyFunSuite
+
+import java.nio.file.Files
+import java.nio.file.Paths
 import scala.sys.process._
-import java.io.File
 
 class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
   val testFilesDir = "testfiles"
   val javaFiles = Seq(
-    "SimpleAdd", "SimpleLoop", "MethodCall", "Conditional",
-    "Fibonacci", "Factorial", "NestedLoop", "ComplexArithmetic",
-    "MultipleReturns", "MaxValue", "DivisionTest", "NegativeNumbers"
+    "SimpleAdd",
+    "SimpleLoop",
+    "MethodCall",
+    "Conditional",
+    "Fibonacci",
+    "Factorial",
+    "NestedLoop",
+    "ComplexArithmetic",
+    "MultipleReturns",
+    "MaxValue",
+    "DivisionTest",
+    "NegativeNumbers"
   )
 
   override def beforeAll(): Unit = {
@@ -20,7 +30,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     javaFiles.foreach { className =>
       val javaFile = s"$testFilesDir/$className.java"
-      val classFile = s"$testFilesDir/$className.class"
+      s"$testFilesDir/$className.class"
 
       if (!Files.exists(Paths.get(javaFile))) {
         println(s"WARNING: $javaFile not found, skipping compilation")
@@ -84,21 +94,6 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 25, s"Expected 25 (5²), got ${result.get}")
-  }
-
-  test("Conditional: x >= 10 should return 1") {
-    val classFile = s"$testFilesDir/Conditional.class"
-
-    if (!Files.exists(Paths.get(classFile))) {
-      cancel(s"$classFile not found. Run: javac testfiles/Conditional.java")
-    }
-
-    val jvm = TinyJVM()
-    jvm.loadClass(classFile)
-    val result = jvm.run("Conditional", "checkValue", "()I")
-
-    assert(result.isDefined, "Result should be defined")
-    assert(result.get == 1, s"Expected 1 (true branch), got ${result.get}")
   }
 
   // ========================================

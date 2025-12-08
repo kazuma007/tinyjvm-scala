@@ -2,30 +2,30 @@ package tinyjvm.bytecode
 
 object ExtendedOpcodes:
   // Load instructions
-  val ILOAD_0: Int = 26  // 0x1a
-  val ILOAD_1: Int = 27  // 0x1b
-  val ILOAD_2: Int = 28  // 0x1c
-  val ILOAD_3: Int = 29  // 0x1d
+  val ILOAD_0: Int = 26 // 0x1a
+  val ILOAD_1: Int = 27 // 0x1b
+  val ILOAD_2: Int = 28 // 0x1c
+  val ILOAD_3: Int = 29 // 0x1d
 
-  val LLOAD_0: Int = 30  // 0x1e
-  val LLOAD_1: Int = 31  // 0x1f
-  val LLOAD_2: Int = 32  // 0x20
-  val LLOAD_3: Int = 33  // 0x21
+  val LLOAD_0: Int = 30 // 0x1e
+  val LLOAD_1: Int = 31 // 0x1f
+  val LLOAD_2: Int = 32 // 0x20
+  val LLOAD_3: Int = 33 // 0x21
 
-  val FLOAD_0: Int = 34  // 0x22
-  val FLOAD_1: Int = 35  // 0x23
-  val FLOAD_2: Int = 36  // 0x24
-  val FLOAD_3: Int = 37  // 0x25
+  val FLOAD_0: Int = 34 // 0x22
+  val FLOAD_1: Int = 35 // 0x23
+  val FLOAD_2: Int = 36 // 0x24
+  val FLOAD_3: Int = 37 // 0x25
 
-  val DLOAD_0: Int = 38  // 0x26
-  val DLOAD_1: Int = 39  // 0x27
-  val DLOAD_2: Int = 40  // 0x28
-  val DLOAD_3: Int = 41  // 0x29
+  val DLOAD_0: Int = 38 // 0x26
+  val DLOAD_1: Int = 39 // 0x27
+  val DLOAD_2: Int = 40 // 0x28
+  val DLOAD_3: Int = 41 // 0x29
 
-  val ALOAD_0: Int = 42  // 0x2a
-  val ALOAD_1: Int = 43  // 0x2b
-  val ALOAD_2: Int = 44  // 0x2c
-  val ALOAD_3: Int = 45  // 0x2d
+  val ALOAD_0: Int = 42 // 0x2a
+  val ALOAD_1: Int = 43 // 0x2b
+  val ALOAD_2: Int = 44 // 0x2c
+  val ALOAD_3: Int = 45 // 0x2d
 
   // Store instructions
   val ISTORE_0: Int = 59 // 0x3b

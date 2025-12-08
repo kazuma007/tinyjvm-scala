@@ -1,26 +1,27 @@
 package tinyjvm.classloader
 
-import java.io.{DataInputStream, ByteArrayInputStream}
-import java.nio.file.{Files, Paths}
 import tinyjvm.runtime.MethodInfo
 
-/**
- * Represents a parsed class file
- */
+import java.io.ByteArrayInputStream
+import java.io.DataInputStream
+import java.nio.file.Files
+import java.nio.file.Paths
+
+/** Represents a parsed class file
+  */
 case class ClassFile(
-  magic: Int,
-  minorVersion: Int,
-  majorVersion: Int,
-  constantPool: Array[ConstantPoolEntry],
-  accessFlags: Int,
-  thisClass: Int,
-  superClass: Int,
-  methods: Seq[MethodInfo]
+    magic: Int,
+    minorVersion: Int,
+    majorVersion: Int,
+    constantPool: Array[ConstantPoolEntry],
+    accessFlags: Int,
+    thisClass: Int,
+    superClass: Int,
+    methods: Seq[MethodInfo]
 )
 
-/**
- * Constant pool entry types
- */
+/** Constant pool entry types
+  */
 sealed trait ConstantPoolEntry
 
 case object EmptyEntry extends ConstantPoolEntry
@@ -37,16 +38,15 @@ case class InterfaceMethodRefEntry(classIndex: Int, nameAndTypeIndex: Int) exten
 case class NameAndTypeEntry(nameIndex: Int, descriptorIndex: Int) extends ConstantPoolEntry
 case class MethodHandleEntry(referenceKind: Int, referenceIndex: Int) extends ConstantPoolEntry
 case class MethodTypeEntry(descriptorIndex: Int) extends ConstantPoolEntry
-case class InvokeDynamicEntry(bootstrapMethodAttrIndex: Int, nameAndTypeIndex: Int) extends ConstantPoolEntry
+case class InvokeDynamicEntry(bootstrapMethodAttrIndex: Int, nameAndTypeIndex: Int)
+    extends ConstantPoolEntry
 
-/**
- * Parses Java class files according to the JVM specification
- */
+/** Parses Java class files according to the JVM specification
+  */
 class ClassFileParser:
 
-  /**
-   * Parse a class file from the given file path
-   */
+  /** Parse a class file from the given file path
+    */
   def parse(filePath: String): ClassFile =
     val bytes = Files.readAllBytes(Paths.get(filePath))
     val dis = new DataInputStream(new ByteArrayInputStream(bytes))
@@ -54,8 +54,10 @@ class ClassFileParser:
     try
       // Magic number (0xCAFEBABE)
       val magic = dis.readInt()
-      if magic != 0xCAFEBABE then
-        throw new ClassFormatError(s"Invalid magic number: 0x${magic.toHexString}, expected 0xCAFEBABE")
+      if magic != 0xcafebabe then
+        throw new ClassFormatError(
+          s"Invalid magic number: 0x${magic.toHexString}, expected 0xCAFEBABE"
+        )
 
       // Version
       val minorVersion = dis.readUnsignedShort()
@@ -76,13 +78,11 @@ class ClassFileParser:
 
       // Interfaces
       val interfacesCount = dis.readUnsignedShort()
-      for _ <- 0 until interfacesCount do
-        dis.readUnsignedShort() // Skip interfaces for now
+      for _ <- 0 until interfacesCount do dis.readUnsignedShort() // Skip interfaces for now
 
       // Fields
       val fieldsCount = dis.readUnsignedShort()
-      for _ <- 0 until fieldsCount do
-        skipField(dis)
+      for _ <- 0 until fieldsCount do skipField(dis)
 
       // Methods
       val methodsCount = dis.readUnsignedShort()
@@ -94,14 +94,20 @@ class ClassFileParser:
       // Skip class attributes
       skipAttributes(dis)
 
-      ClassFile(magic, minorVersion, majorVersion, constantPool,
-        accessFlags, thisClass, superClass, methods)
-    finally
-      dis.close()
+      ClassFile(
+        magic,
+        minorVersion,
+        majorVersion,
+        constantPool,
+        accessFlags,
+        thisClass,
+        superClass,
+        methods
+      )
+    finally dis.close()
 
-  /**
-   * Parse the constant pool
-   */
+  /** Parse the constant pool
+    */
   private def parseConstantPool(dis: DataInputStream, count: Int): Array[ConstantPoolEntry] =
     val pool = new Array[ConstantPoolEntry](count)
     pool(0) = EmptyEntry
@@ -169,19 +175,20 @@ class ClassFileParser:
 
     pool
 
-  /**
-   * Skip a field entry
-   */
+  /** Skip a field entry
+    */
   private def skipField(dis: DataInputStream): Unit =
     dis.readUnsignedShort() // access_flags
     dis.readUnsignedShort() // name_index
     dis.readUnsignedShort() // descriptor_index
     skipAttributes(dis)
 
-  /**
-   * Parse a method
-   */
-  private def parseMethod(dis: DataInputStream, constantPool: Array[ConstantPoolEntry]): MethodInfo =
+  /** Parse a method
+    */
+  private def parseMethod(
+      dis: DataInputStream,
+      constantPool: Array[ConstantPoolEntry]
+  ): MethodInfo =
     val accessFlags = dis.readUnsignedShort()
     val nameIndex = dis.readUnsignedShort()
     val descriptorIndex = dis.readUnsignedShort()
@@ -197,7 +204,7 @@ class ClassFileParser:
 
       val attrName = constantPool(attrNameIndex) match
         case Utf8Entry(name) => name
-        case _ => ""
+        case _               => ""
 
       if attrName == "Code" then
         maxStack = dis.readUnsignedShort()
@@ -208,29 +215,28 @@ class ClassFileParser:
 
         // Skip exception table
         val exceptionTableLength = dis.readUnsignedShort()
-        for _ <- 0 until exceptionTableLength do
-          dis.skipBytes(8)
+        for _ <- 0 until exceptionTableLength do dis.skipBytes(8)
 
         // Skip code attributes
         skipAttributes(dis)
-      else
-        dis.skipBytes(attrLength)
+      else dis.skipBytes(attrLength)
 
     val name = constantPool(nameIndex) match
       case Utf8Entry(n) => n
-      case _ => "unknown"
+      case _            => "unknown"
 
     val descriptor = constantPool(descriptorIndex) match
       case Utf8Entry(d) => d
-      case _ => ""
+      case _            => ""
 
-    println(s"[Parser] Parsed method: $name$descriptor (maxStack=$maxStack, maxLocals=$maxLocals, codeLen=${code.length})")
+    println(
+      s"[Parser] Parsed method: $name$descriptor (maxStack=$maxStack, maxLocals=$maxLocals, codeLen=${code.length})"
+    )
 
     MethodInfo(name, descriptor, accessFlags, maxStack, maxLocals, code)
 
-  /**
-   * Skip attribute entries
-   */
+  /** Skip attribute entries
+    */
   private def skipAttributes(dis: DataInputStream): Unit =
     val attributesCount = dis.readUnsignedShort()
     for _ <- 0 until attributesCount do

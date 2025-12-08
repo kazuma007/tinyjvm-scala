@@ -1,33 +1,30 @@
 package tinyjvm.bytecode
 
-import tinyjvm.runtime.Frame
 import org.objectweb.asm.Opcodes._
 import tinyjvm.bytecode.ExtendedOpcodes._
+import tinyjvm.runtime.Frame
 
-/**
- * Base trait for all JVM bytecode instructions
- */
+/** Base trait for all JVM bytecode instructions
+  */
 sealed trait Instruction:
   def execute(frame: Frame): Unit
   def opcode: Int
 
-/**
- * Instructions with no operands (e.g., IADD, ISUB, ICONST_1)
- */
+/** Instructions with no operands (e.g., IADD, ISUB, ICONST_1)
+  */
 case class NoOperandInstruction(opcode: Int) extends Instruction:
   override def execute(frame: Frame): Unit =
     opcode match
       case NOP => // Do nothing
-
       // Constants
       case ACONST_NULL => frame.operandStack.push(null)
-      case ICONST_M1 => frame.operandStack.push(-1)
-      case ICONST_0 => frame.operandStack.push(0)
-      case ICONST_1 => frame.operandStack.push(1)
-      case ICONST_2 => frame.operandStack.push(2)
-      case ICONST_3 => frame.operandStack.push(3)
-      case ICONST_4 => frame.operandStack.push(4)
-      case ICONST_5 => frame.operandStack.push(5)
+      case ICONST_M1   => frame.operandStack.push(-1)
+      case ICONST_0    => frame.operandStack.push(0)
+      case ICONST_1    => frame.operandStack.push(1)
+      case ICONST_2    => frame.operandStack.push(2)
+      case ICONST_3    => frame.operandStack.push(3)
+      case ICONST_4    => frame.operandStack.push(4)
+      case ICONST_5    => frame.operandStack.push(5)
 
       case LCONST_0 => frame.operandStack.push(0L)
       case LCONST_1 => frame.operandStack.push(1L)
@@ -157,16 +154,15 @@ case class NoOperandInstruction(opcode: Int) extends Instruction:
         frame.operandStack.push(v1)
         frame.operandStack.push(v2)
 
-      case _ => 
+      case _ =>
         throw new UnsupportedOperationException(
           s"Unsupported opcode: 0x${opcode.toHexString} at pc=${frame.pc - 1}"
         )
 
 end NoOperandInstruction
 
-/**
- * Instructions with an index operand (e.g., ILOAD, ISTORE)
- */
+/** Instructions with an index operand (e.g., ILOAD, ISTORE)
+  */
 case class IndexInstruction(opcode: Int, index: Int) extends Instruction:
   override def execute(frame: Frame): Unit =
     opcode match
@@ -176,44 +172,41 @@ case class IndexInstruction(opcode: Int, index: Int) extends Instruction:
       case ISTORE | LSTORE | FSTORE | DSTORE | ASTORE =>
         frame.localVariables.set(index, frame.operandStack.pop())
 
-      case _ => 
+      case _ =>
         throw new UnsupportedOperationException(
           s"Unsupported indexed opcode: 0x${opcode.toHexString} with index $index"
         )
 
 end IndexInstruction
 
-/**
- * Instructions with a byte operand (e.g., BIPUSH)
- */
+/** Instructions with a byte operand (e.g., BIPUSH)
+  */
 case class ByteInstruction(opcode: Int, operand: Byte) extends Instruction:
   override def execute(frame: Frame): Unit =
     opcode match
       case BIPUSH => frame.operandStack.push(operand.toInt)
-      case _ => 
+      case _ =>
         throw new UnsupportedOperationException(
           s"Unsupported byte opcode: 0x${opcode.toHexString}"
         )
 
 end ByteInstruction
 
-/**
- * Instructions with a short operand (e.g., SIPUSH)
- */
+/** Instructions with a short operand (e.g., SIPUSH)
+  */
 case class ShortInstruction(opcode: Int, operand: Short) extends Instruction:
   override def execute(frame: Frame): Unit =
     opcode match
       case SIPUSH => frame.operandStack.push(operand.toInt)
-      case _ => 
+      case _ =>
         throw new UnsupportedOperationException(
           s"Unsupported short opcode: 0x${opcode.toHexString}"
         )
 
 end ShortInstruction
 
-/**
- * Branch instructions (e.g., GOTO, IF_ICMPEQ)
- */
+/** Branch instructions (e.g., GOTO, IF_ICMPEQ)
+  */
 case class BranchInstruction(opcode: Int, offset: Short) extends Instruction:
   override def execute(frame: Frame): Unit =
     val branchPC = frame.pc - 3 + offset
@@ -276,16 +269,15 @@ case class BranchInstruction(opcode: Int, offset: Short) extends Instruction:
         val v1 = frame.operandStack.pop().asInstanceOf[Int]
         if v1 <= v2 then frame.pc = branchPC
 
-      case _ => 
+      case _ =>
         throw new UnsupportedOperationException(
           s"Unsupported branch opcode: 0x${opcode.toHexString}"
         )
 
 end BranchInstruction
 
-/**
- * IINC instruction - increment local variable
- */
+/** IINC instruction - increment local variable
+  */
 case class IincInstruction(index: Int, const: Int) extends Instruction:
   override val opcode: Int = IINC
 
@@ -295,9 +287,8 @@ case class IincInstruction(index: Int, const: Int) extends Instruction:
 
 end IincInstruction
 
-/**
- * Method invocation instructions (handled specially by interpreter)
- */
+/** Method invocation instructions (handled specially by interpreter)
+  */
 case class InvokeInstruction(opcode: Int, methodIndex: Int) extends Instruction:
   override def execute(frame: Frame): Unit =
     throw new UnsupportedOperationException(
