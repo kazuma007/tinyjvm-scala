@@ -30,7 +30,6 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     javaFiles.foreach { className =>
       val javaFile = s"$testFilesDir/$className.java"
-      s"$testFilesDir/$className.class"
 
       if (!Files.exists(Paths.get(javaFile))) {
         println(s"WARNING: $javaFile not found, skipping compilation")
@@ -60,7 +59,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("SimpleAdd", "add", "()I")
+    val result = jvm.run("SimpleAdd", "add")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 8, s"Expected 8, got ${result.get}")
@@ -75,7 +74,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("SimpleLoop", "sumToN", "()I")
+    val result = jvm.run("SimpleLoop", "sumToN")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 15, s"Expected 15 (1+2+3+4+5), got ${result.get}")
@@ -90,7 +89,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("MethodCall", "main", "()I")
+    val result = jvm.run("MethodCall")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 25, s"Expected 25 (5²), got ${result.get}")
@@ -109,7 +108,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("ComplexArithmetic", "compute", "()I")
+    val result = jvm.run("ComplexArithmetic", "compute")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 41, s"Expected 41, got ${result.get}")
@@ -124,7 +123,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("DivisionTest", "divide", "()I")
+    val result = jvm.run("DivisionTest", "divide")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 25, s"Expected 25, got ${result.get}")
@@ -139,7 +138,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("NegativeNumbers", "compute", "()I")
+    val result = jvm.run("NegativeNumbers", "compute")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 2, s"Expected 2, got ${result.get}")
@@ -158,7 +157,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("Fibonacci", "compute", "()I")
+    val result = jvm.run("Fibonacci", "compute")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 13, s"Expected 13 (7th Fibonacci), got ${result.get}")
@@ -173,7 +172,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("Factorial", "compute", "()I")
+    val result = jvm.run("Factorial", "compute")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 120, s"Expected 120 (5!), got ${result.get}")
@@ -188,7 +187,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("NestedLoop", "compute", "()I")
+    val result = jvm.run("NestedLoop", "compute")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 100, s"Expected 100, got ${result.get}")
@@ -207,7 +206,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("MultipleReturns", "checkCondition", "()I")
+    val result = jvm.run("MultipleReturns", "checkCondition")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 42, s"Expected 42, got ${result.get}")
@@ -222,7 +221,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
 
     val jvm = TinyJVM()
     jvm.loadClass(classFile)
-    val result = jvm.run("MaxValue", "findMax", "()I")
+    val result = jvm.run("MaxValue", "findMax")
 
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 23, s"Expected 23, got ${result.get}")
@@ -264,7 +263,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
     jvm.loadClass(classFile)
 
     assertThrows[NoSuchMethodError] {
-      jvm.run("SimpleAdd", "nonExistentMethod", "()I")
+      jvm.run("SimpleAdd", "nonExistentMethod")
     }
   }
 
@@ -285,7 +284,7 @@ class TinyJVMIntegrationTest extends AnyFunSuite with BeforeAndAfterAll {
     // Load again - should use cached version
     jvm.loadClass(classFile)
 
-    val result = jvm.run("SimpleAdd", "add", "()I")
+    val result = jvm.run("SimpleAdd", "add")
     assert(result.isDefined, "Result should be defined")
     assert(result.get == 8, s"Expected 8, got ${result.get}")
   }
