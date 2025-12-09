@@ -1,6 +1,8 @@
 package tinyjvm.bytecode
 
 import org.objectweb.asm.Opcodes._
+import tinyjvm.bytecode.ArithmeticOperations._
+import tinyjvm.bytecode.ArrayOperations._
 import tinyjvm.bytecode.ExtendedOpcodes._
 import tinyjvm.runtime.Frame
 
@@ -9,6 +11,98 @@ import tinyjvm.runtime.Frame
 sealed trait Instruction:
   def execute(frame: Frame): Unit
   def opcode: Int
+
+/** Helper functions for array operations
+  */
+object ArrayOperations:
+
+  /** Generic array load operation with bounds and null checking
+    * @param frame
+    *   The execution frame
+    * @param converter
+    *   Optional conversion function for narrow types (byte, char, short)
+    */
+  def loadFromArray[T](frame: Frame, converter: T => Any = identity[T]): Unit =
+    val index = frame.operandStack.pop().asInstanceOf[Int]
+    val arrayRef = frame.operandStack.pop()
+
+    if arrayRef == null then throw new NullPointerException("Array is null")
+
+    val array = arrayRef.asInstanceOf[Array[T]]
+
+    if index < 0 || index >= array.length then
+      throw new ArrayIndexOutOfBoundsException(
+        s"Index $index out of bounds for length ${array.length}"
+      )
+
+    frame.operandStack.push(converter(array(index)))
+
+  /** Generic array store operation with bounds and null checking
+    * @param frame
+    *   The execution frame
+    * @param converter
+    *   Optional conversion function for narrow types (byte, char, short)
+    */
+  def storeToArray[T](frame: Frame, converter: Any => T = identity[Any](_).asInstanceOf[T]): Unit =
+    val value = frame.operandStack.pop()
+    val index = frame.operandStack.pop().asInstanceOf[Int]
+    val arrayRef = frame.operandStack.pop()
+
+    if arrayRef == null then throw new NullPointerException("Array is null")
+
+    val array = arrayRef.asInstanceOf[Array[T]]
+
+    if index < 0 || index >= array.length then
+      throw new ArrayIndexOutOfBoundsException(
+        s"Index $index out of bounds for length ${array.length}"
+      )
+
+    array(index) = converter(value)
+
+  /** Get length of any array type with null checking
+    */
+  def getArrayLength(arrayRef: Any): Int =
+    if arrayRef == null then throw new NullPointerException("Array is null")
+
+    arrayRef match
+      case arr: Array[Int]    => arr.length
+      case arr: Array[Long]   => arr.length
+      case arr: Array[Float]  => arr.length
+      case arr: Array[Double] => arr.length
+      case arr: Array[Byte]   => arr.length
+      case arr: Array[Char]   => arr.length
+      case arr: Array[Short]  => arr.length
+      case arr: Array[AnyRef] => arr.length
+      case _ => throw new InternalError(s"Unknown array type: ${arrayRef.getClass}")
+
+end ArrayOperations
+
+/** Helper functions for arithmetic operations
+  */
+object ArithmeticOperations:
+
+  /** Generic binary arithmetic operation
+    */
+  def binaryOp[T](frame: Frame, op: (T, T) => T): Unit =
+    val v2 = frame.operandStack.pop().asInstanceOf[T]
+    val v1 = frame.operandStack.pop().asInstanceOf[T]
+    frame.operandStack.push(op(v1, v2))
+
+  /** Binary operation with division by zero check
+    */
+  def divisionOp[T](frame: Frame, op: (T, T) => T, isZero: T => Boolean): Unit =
+    val v2 = frame.operandStack.pop().asInstanceOf[T]
+    val v1 = frame.operandStack.pop().asInstanceOf[T]
+    if isZero(v2) then throw new ArithmeticException("Division by zero")
+    frame.operandStack.push(op(v1, v2))
+
+  /** Unary arithmetic operation
+    */
+  def unaryOp[T](frame: Frame, op: T => T): Unit =
+    val v = frame.operandStack.pop().asInstanceOf[T]
+    frame.operandStack.push(op(v))
+
+end ArithmeticOperations
 
 /** Instructions with no operands (e.g., IADD, ISUB, ICONST_1)
   */
@@ -36,293 +130,56 @@ case class NoOperandInstruction(opcode: Int) extends Instruction:
       case DCONST_0 => frame.operandStack.push(0.0)
       case DCONST_1 => frame.operandStack.push(1.0)
 
-      // Arithmetic operations
-      case IADD =>
-        val v2 = frame.operandStack.pop().asInstanceOf[Int]
-        val v1 = frame.operandStack.pop().asInstanceOf[Int]
-        frame.operandStack.push(v1 + v2)
+      // Integer arithmetic operations
+      case IADD => binaryOp[Int](frame, _ + _)
+      case ISUB => binaryOp[Int](frame, _ - _)
+      case IMUL => binaryOp[Int](frame, _ * _)
+      case IDIV => divisionOp[Int](frame, _ / _, _ == 0)
+      case IREM => divisionOp[Int](frame, _ % _, _ == 0)
+      case INEG => unaryOp[Int](frame, -_)
 
-      case ISUB =>
-        val v2 = frame.operandStack.pop().asInstanceOf[Int]
-        val v1 = frame.operandStack.pop().asInstanceOf[Int]
-        frame.operandStack.push(v1 - v2)
-
-      case IMUL =>
-        val v2 = frame.operandStack.pop().asInstanceOf[Int]
-        val v1 = frame.operandStack.pop().asInstanceOf[Int]
-        frame.operandStack.push(v1 * v2)
-
-      case IDIV =>
-        val v2 = frame.operandStack.pop().asInstanceOf[Int]
-        val v1 = frame.operandStack.pop().asInstanceOf[Int]
-        if v2 == 0 then throw new ArithmeticException("Division by zero")
-        frame.operandStack.push(v1 / v2)
-
-      case IREM =>
-        val v2 = frame.operandStack.pop().asInstanceOf[Int]
-        val v1 = frame.operandStack.pop().asInstanceOf[Int]
-        if v2 == 0 then throw new ArithmeticException("Division by zero")
-        frame.operandStack.push(v1 % v2)
-
-      case INEG =>
-        val v = frame.operandStack.pop().asInstanceOf[Int]
-        frame.operandStack.push(-v)
-
-      // Long arithmetic
-      case LADD =>
-        val v2 = frame.operandStack.pop().asInstanceOf[Long]
-        val v1 = frame.operandStack.pop().asInstanceOf[Long]
-        frame.operandStack.push(v1 + v2)
-
-      case LSUB =>
-        val v2 = frame.operandStack.pop().asInstanceOf[Long]
-        val v1 = frame.operandStack.pop().asInstanceOf[Long]
-        frame.operandStack.push(v1 - v2)
-
-      case LMUL =>
-        val v2 = frame.operandStack.pop().asInstanceOf[Long]
-        val v1 = frame.operandStack.pop().asInstanceOf[Long]
-        frame.operandStack.push(v1 * v2)
-
-      case LDIV =>
-        val v2 = frame.operandStack.pop().asInstanceOf[Long]
-        val v1 = frame.operandStack.pop().asInstanceOf[Long]
-        if v2 == 0L then throw new ArithmeticException("Division by zero")
-        frame.operandStack.push(v1 / v2)
+      // Long arithmetic operations
+      case LADD => binaryOp[Long](frame, _ + _)
+      case LSUB => binaryOp[Long](frame, _ - _)
+      case LMUL => binaryOp[Long](frame, _ * _)
+      case LDIV => divisionOp[Long](frame, _ / _, _ == 0L)
 
       // Array load operations
-      case IALOAD =>
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Int]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        frame.operandStack.push(array(index))
-
-      case LALOAD =>
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Long]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        frame.operandStack.push(array(index))
-
-      case FALOAD =>
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Float]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        frame.operandStack.push(array(index))
-
-      case DALOAD =>
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Double]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        frame.operandStack.push(array(index))
-
-      case AALOAD =>
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[AnyRef]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        frame.operandStack.push(array(index))
-
-      case BALOAD =>
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Byte]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        frame.operandStack.push(array(index).toInt)
-
-      case CALOAD =>
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Char]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        frame.operandStack.push(array(index).toInt)
-
-      case SALOAD =>
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Short]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        frame.operandStack.push(array(index).toInt)
+      case IALOAD => loadFromArray[Int](frame)
+      case LALOAD => loadFromArray[Long](frame)
+      case FALOAD => loadFromArray[Float](frame)
+      case DALOAD => loadFromArray[Double](frame)
+      case AALOAD => loadFromArray[AnyRef](frame)
+      case BALOAD => loadFromArray[Byte](frame, _.toInt)
+      case CALOAD => loadFromArray[Char](frame, _.toInt)
+      case SALOAD => loadFromArray[Short](frame, _.toInt)
 
       // Array store operations
-      case IASTORE =>
-        val value = frame.operandStack.pop().asInstanceOf[Int]
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Int]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        array(index) = value
-
-      case LASTORE =>
-        val value = frame.operandStack.pop().asInstanceOf[Long]
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Long]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        array(index) = value
-
-      case FASTORE =>
-        val value = frame.operandStack.pop().asInstanceOf[Float]
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Float]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        array(index) = value
-
-      case DASTORE =>
-        val value = frame.operandStack.pop().asInstanceOf[Double]
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Double]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        array(index) = value
-
-      case AASTORE =>
-        val value = frame.operandStack.pop()
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[AnyRef]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        array(index) = value.asInstanceOf[AnyRef]
-
-      case BASTORE =>
-        val value = frame.operandStack.pop().asInstanceOf[Int]
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Byte]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        array(index) = value.toByte
-
-      case CASTORE =>
-        val value = frame.operandStack.pop().asInstanceOf[Int]
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Char]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        array(index) = value.toChar
-
-      case SASTORE =>
-        val value = frame.operandStack.pop().asInstanceOf[Int]
-        val index = frame.operandStack.pop().asInstanceOf[Int]
-        val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val array = arrayRef.asInstanceOf[Array[Short]]
-        if index < 0 || index >= array.length then
-          throw new ArrayIndexOutOfBoundsException(
-            s"Index $index out of bounds for length ${array.length}"
-          )
-        array(index) = value.toShort
+      case IASTORE => storeToArray[Int](frame)
+      case LASTORE => storeToArray[Long](frame)
+      case FASTORE => storeToArray[Float](frame)
+      case DASTORE => storeToArray[Double](frame)
+      case AASTORE => storeToArray[AnyRef](frame, _.asInstanceOf[AnyRef])
+      case BASTORE => storeToArray[Byte](frame, v => v.asInstanceOf[Int].toByte)
+      case CASTORE => storeToArray[Char](frame, v => v.asInstanceOf[Int].toChar)
+      case SASTORE => storeToArray[Short](frame, v => v.asInstanceOf[Int].toShort)
 
       // Array length
       case ARRAYLENGTH =>
         val arrayRef = frame.operandStack.pop()
-        if arrayRef == null then throw new NullPointerException("Array is null")
-        val length = arrayRef match
-          case arr: Array[Int]    => arr.length
-          case arr: Array[Long]   => arr.length
-          case arr: Array[Float]  => arr.length
-          case arr: Array[Double] => arr.length
-          case arr: Array[Byte]   => arr.length
-          case arr: Array[Char]   => arr.length
-          case arr: Array[Short]  => arr.length
-          case arr: Array[AnyRef] => arr.length
-          case _ => throw new InternalError(s"Unknown array type: ${arrayRef.getClass}")
-        frame.operandStack.push(length)
+        frame.operandStack.push(getArrayLength(arrayRef))
 
       // Load operations with implicit indices
-      case ILOAD_0 => frame.operandStack.push(frame.localVariables.get(0))
-      case ILOAD_1 => frame.operandStack.push(frame.localVariables.get(1))
-      case ILOAD_2 => frame.operandStack.push(frame.localVariables.get(2))
-      case ILOAD_3 => frame.operandStack.push(frame.localVariables.get(3))
-
-      case LLOAD_0 => frame.operandStack.push(frame.localVariables.get(0))
-      case LLOAD_1 => frame.operandStack.push(frame.localVariables.get(1))
-      case LLOAD_2 => frame.operandStack.push(frame.localVariables.get(2))
-      case LLOAD_3 => frame.operandStack.push(frame.localVariables.get(3))
-
-      case ALOAD_0 => frame.operandStack.push(frame.localVariables.get(0))
-      case ALOAD_1 => frame.operandStack.push(frame.localVariables.get(1))
-      case ALOAD_2 => frame.operandStack.push(frame.localVariables.get(2))
-      case ALOAD_3 => frame.operandStack.push(frame.localVariables.get(3))
+      case ILOAD_0 | LLOAD_0 | ALOAD_0 => frame.operandStack.push(frame.localVariables.get(0))
+      case ILOAD_1 | LLOAD_1 | ALOAD_1 => frame.operandStack.push(frame.localVariables.get(1))
+      case ILOAD_2 | LLOAD_2 | ALOAD_2 => frame.operandStack.push(frame.localVariables.get(2))
+      case ILOAD_3 | LLOAD_3 | ALOAD_3 => frame.operandStack.push(frame.localVariables.get(3))
 
       // Store operations with implicit indices
-      case ISTORE_0 => frame.localVariables.set(0, frame.operandStack.pop())
-      case ISTORE_1 => frame.localVariables.set(1, frame.operandStack.pop())
-      case ISTORE_2 => frame.localVariables.set(2, frame.operandStack.pop())
-      case ISTORE_3 => frame.localVariables.set(3, frame.operandStack.pop())
-
-      case LSTORE_0 => frame.localVariables.set(0, frame.operandStack.pop())
-      case LSTORE_1 => frame.localVariables.set(1, frame.operandStack.pop())
-      case LSTORE_2 => frame.localVariables.set(2, frame.operandStack.pop())
-      case LSTORE_3 => frame.localVariables.set(3, frame.operandStack.pop())
-
-      case ASTORE_0 => frame.localVariables.set(0, frame.operandStack.pop())
-      case ASTORE_1 => frame.localVariables.set(1, frame.operandStack.pop())
-      case ASTORE_2 => frame.localVariables.set(2, frame.operandStack.pop())
-      case ASTORE_3 => frame.localVariables.set(3, frame.operandStack.pop())
+      case ISTORE_0 | LSTORE_0 | ASTORE_0 => frame.localVariables.set(0, frame.operandStack.pop())
+      case ISTORE_1 | LSTORE_1 | ASTORE_1 => frame.localVariables.set(1, frame.operandStack.pop())
+      case ISTORE_2 | LSTORE_2 | ASTORE_2 => frame.localVariables.set(2, frame.operandStack.pop())
+      case ISTORE_3 | LSTORE_3 | ASTORE_3 => frame.localVariables.set(3, frame.operandStack.pop())
 
       // Stack operations
       case DUP =>
